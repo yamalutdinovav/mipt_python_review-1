@@ -7,14 +7,28 @@ from collections import defaultdict
 from pickle import dump
 import argparse
 
+# Шаблон, по которому производится поиск слов
 alphabet = re.compile(u'[а-яА-яё-]+')
+
+# Аргументы командной строки:
 parse = argparse.ArgumentParser()
-parse.add_argument('--input-dir', help='Путь к директории, в которой лежит коллекция документов', dest='dir')
-parse.add_argument('--model', help='Путь к файлу, в который сохраняется модель', required=True)
-parse.add_argument('--lc', help='Приводить тексты к lowercase', action='store_true')
+parse.add_argument('--input-dir',
+                   help='Путь к директории, в которой лежат документы. Если не указана, текст вводится из stdin',
+                   dest='dir')
+parse.add_argument('--model', help='Обязательный аргумент. Путь к файлу, в который сохраняется модель', required=True)
+parse.add_argument('--lc', help='Необязательный аргумент. Приводить тексты к lowercase', action='store_true')
 namespace = parse.parse_args()
 
+
 def gen_tokens(input_file):
+    '''
+
+    :param input_file: Путь к файлу, содержащему исходный текст
+    :type input_file: str
+    :return: Генерирует слова из файла без неалфавитных символов
+    :rtype: str
+
+    '''
     if namespace.dir is None:
         for line in sys.stdin:
             for token in alphabet.findall(line):
@@ -26,8 +40,17 @@ def gen_tokens(input_file):
                     yield token
 
 
+
 def gen_bigramms(tokens):
-    token_0 = "#"
+    '''
+
+    :param tokens: Генератор слов
+    :type tokens: generator
+    :return: Возвращает пары вида (слово_1, слово_2)
+    :rtype: tuple
+
+    '''
+    token_0 = "#" # Cпециальный символ, используемый для первого и последнего слова в словаре
     for token_1 in tokens:
         yield token_0, token_1
         token_0 = token_1
@@ -35,13 +58,21 @@ def gen_bigramms(tokens):
 
 
 def train(text):
+    '''
+
+    :param text: Путь к файлу, содержащему исходный текст
+    :type: str
+    :return: Возвращает словарь, в котором первому слову из пары сопоставлено второе слово и частота его вхождения
+    :rtype: defaultdict
+
+    '''
     tokens = gen_tokens(text)
     bigramms = gen_bigramms(tokens)
     pairs = defaultdict(lambda: 0)
     for (token_0, token_1) in bigramms:
-        if namespace.lc is not None:
+        if namespace.lc:  # Опционально приводим к lowercase
             token_0, token_1 = token_0.lower(), token_1.lower()
-        pairs[token_0, token_1] += 1
+        pairs[token_0, token_1] += 1  # Считаем частоту вхождения пары (token_0, token_1)
     model = defaultdict(dict)
     for ((token_0, token_1), frequency) in pairs.items():
         model[token_0][token_1] = frequency
@@ -49,11 +80,16 @@ def train(text):
 
 
 def write_train_result():
+    '''
+
+    :return: Записывает модель в файл, путь к которому передается в --model
+
+    '''
     with open(namespace.model, 'wb') as data:
-        os.chdir(namespace.dir)
+        os.chdir(namespace.dir)  # Спускаемся в директорию dir
         files = os.listdir(namespace.dir)
         for filename in files:
-            root, extension = os.path.splitext(filename)
+            root, extension = os.path.splitext(filename)  # Ищем файлы с разрешением .txt
             if extension == '.txt':
                 model = train(filename)
                 dump(model, data)
