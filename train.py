@@ -78,24 +78,25 @@ def train(text, model):
         model[token_0][token_1] = frequency
 
 
-def get_files(path, txt_files):
+def get_files(path):
     '''
 
     :param path: Путь к рассматриваемому файлу
     :param txt_files: список файлов, имеющих разрешение .txt
     :return: По указанному пути возвращает список файлов .txt, лежащих в указанной директории
     '''
+    txt_files = []
     if os.path.isfile(path):
         root, extension = os.path.splitext(path) # Получаем разрешение файла
         if extension == '.txt':
             txt_files.append(path)
     else:
         os.chdir(path)
-        files = os.listdir(path)
         for file in os.listdir(path):
             if file[0] != '.': # Позволяет отсечь папки типа ".git" и др.
-                get_files(os.path.normpath(path + '/' + file), txt_files) # Рекурсивно рассматриваем вложенные файлы
-
+                # Рекурсивно рассматриваем вложенные файлы
+                txt_files += get_files(os.path.normpath(path + '/' + file))
+    return txt_files
 
 def write_train_result():
     '''
@@ -105,9 +106,7 @@ def write_train_result():
     '''
     model = defaultdict(dict)
     with open(namespace.model, 'wb') as data:
-        txt_files = []
-        get_files(namespace.dir, txt_files)
-        for text in txt_files:
+        for text in get_files(namespace.dir):
             train(text, model)
         dump(model, data)
 
