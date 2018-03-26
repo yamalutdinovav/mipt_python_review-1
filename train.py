@@ -8,7 +8,7 @@ from pickle import dump
 import argparse
 
 # Шаблон, по которому производится поиск слов
-alphabet = re.compile(u'[а-яА-яё-]+')
+alphabet = re.compile(u'[a-zA-Zа-яА-яё-]+')
 
 # Аргументы командной строки:
 parse = argparse.ArgumentParser()

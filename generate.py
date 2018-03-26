@@ -73,12 +73,14 @@ def build_phrase(model, number):
     else:
         token_0 = namespace.seed
     token_1 = weighted_choice(model[token_0])
-    phrase += token_0.capitalize()
     while len(phrase.split()) < number:
         token_0, token_1 = token_1, weighted_choice(model[token_1])
         if not token_0.isalpha():  # Необходимо, чтобы отсечь символ '#'
             continue
-        phrase += ' ' + token_0
+        if phrase == '':
+            phrase += token_0
+        else:
+            phrase += ' ' + token_0
     return phrase
 
 
