@@ -39,7 +39,7 @@ def gen_tokens(input_file):
             for token in alphabet.findall(line):
                 yield token
     else:
-        with open(input_file, 'r', encoding='utf-8') as data:
+        with open(input_file, 'r') as data:
             for line in data.readlines():
                 for token in alphabet.findall(line):
                     yield token
