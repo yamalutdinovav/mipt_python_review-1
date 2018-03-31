@@ -74,13 +74,14 @@ def build_phrase(model, number):
         token_0 = namespace.seed
     token_1 = weighted_choice(model[token_0])
     while len(phrase.split()) < number:
-        token_0, token_1 = token_1, weighted_choice(model[token_1])
         if not token_0.isalpha():  # Необходимо, чтобы отсечь символ '#'
+            token_0, token_1 = token_1, weighted_choice(model[token_1])
             continue
         if phrase == '':
             phrase += token_0
         else:
             phrase += ' ' + token_0
+        token_0, token_1 = token_1, weighted_choice(model[token_1])
     return phrase
 
 
@@ -95,7 +96,7 @@ def write_phrase(phrase):
     if namespace.output is None:
         print(phrase)  # Консольный вывод текста
     else:
-        with open(namespace.output, 'w', encoding='utf-8') as data:
+        with open(namespace.output, 'w') as data:
             data.write(phrase)  # Запись в указанный файл
 
 
