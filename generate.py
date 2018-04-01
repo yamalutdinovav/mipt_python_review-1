@@ -69,14 +69,13 @@ def build_phrase(model, number):
     if namespace.seed is None:
         token_0 = random.choice(list(model.keys()))
     elif namespace.seed not in model:
-        raise ValueError("Указанного слова нет в модели")
+        raise KeyError("Указанного слова нет в модели")
     else:
         token_0 = namespace.seed
     token_1 = weighted_choice(model[token_0])
     while len(phrase.split()) < number:
         if not token_0.isalpha():  # Необходимо, чтобы отсечь символ '#'
             token_0, token_1 = token_1, weighted_choice(model[token_1])
-            continue
         if phrase == '':
             phrase += token_0
         else:
