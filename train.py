@@ -43,6 +43,8 @@ def gen_tokens(input_file):
             for line in data.readlines():
                 for token in alphabet.findall(line):
                     yield token
+                yield '#'
+            yield '#'
 
 
 def gen_bigramms(tokens):
@@ -78,6 +80,8 @@ def train(text, model):
     bigramms = gen_bigramms(tokens)
     pairs = defaultdict(lambda: 0)
     for (token_0, token_1) in bigramms:
+        if (token_0, token_1) == ('#', '#'):
+            continue
         if namespace.lc:  # Опционально приводим к lowercase
             token_0, token_1 = token_0.lower(), token_1.lower()
         # Считаем частоту вхождения пары (token_0, token_1)
