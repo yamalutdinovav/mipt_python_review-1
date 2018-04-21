@@ -1,21 +1,29 @@
 # -*- coding: utf-8 -*-
+# Запись последовательности слов на основе сгенерированного словаря
+# Автор: Артем Ямалутдинов, 1 курс ФИВТ МФТИ
+# Ревью №1
+# 21 апреля 2018 года
 
 from pickle import load
-from collections import defaultdict
 import random
 import argparse
 
+# Специальный служебный символ для начала и конца строки
+ENDSYMBOL = '#'
+
 # Аргументы командной строки:
-parse = argparse.ArgumentParser()
+parse = argparse.ArgumentParser(
+    description='Запись сгенерированного на основе словаря биграмм текста')
 parse.add_argument('--model',
                    help='Обязательный аргумент. '
                    'Путь к файлу, из которого загружается модель.',
                    required=True)
-parse.add_argument('--seed', help='Начальное слово. '
+parse.add_argument('--seed', help='Необязательный аргумент.'
+                                  ' Начальное слово текста. '
                    'Если не указано, выбираем слово случайно',
                    action='store', dest='seed')
 parse.add_argument('--length', help='Обязательный аргумент. '
-                   'Длина генерируемой последовательности',
+                   'Длина генерируемой последовательности слов',
                    required=True, action='store', dest='length')
 parse.add_argument('--output',
                    help='Файл, в который будет записан результат. '
@@ -23,27 +31,29 @@ parse.add_argument('--output',
 namespace = parse.parse_args()
 
 
-def load_model():
-    '''
-
-    :return: Возвращает словарь, записанный по указанному пути
-    :rtype: defaultdict
-
-    '''
-    with open(namespace.model, 'rb') as data:
+def load_model(model):
+    """
+    Загрузка модели из файла
+    :param model: Путь к файлу, в который сохраняется модель
+    :type model: str
+    :return: Модель, построенная по набору текстов
+    :rtype: dict
+    """
+    with open(model, 'rb') as data:
         return load(data)
 
 
 def weighted_choice(elements):
-    '''
+    """
+    Выбор слова из словаря с учетом частоты вхождения
     :param elements: Словарь, из которого совершается выбор
     :type elements: dict
-    :return: Возвращает слово, случайно выбранное из словаря
-             с учетом частоты вхождения
+    :return: Слово, случайно выбранное из словаря
     :rtype: str
-
-    '''
-    # Cуммарная частота вхождения слов
+    """
+    # Суммарная частота вхождения слов
+    if len(elements) == 0:
+        raise KeyError("Модель пуста")
     total = sum(weight for token, weight in elements.items())
     rand = random.uniform(0, total)
     tmp = 0
@@ -51,53 +61,56 @@ def weighted_choice(elements):
         if tmp + weight > rand:
             return token
         tmp += weight
-    assert False  # Если не вывели ничего, то ошибка
 
 
-def build_phrase(model, number):
-    '''
-
+def build_phrase(model, number, seed):
+    """
+    Строит последовательность слов по переданной модели
     :param model: Словарь, состоящий из слов и частот их вхождения
     :param number: Длина (количество слов) в выводимой фразе
     :type model: dict
     :type number: int
+    :param seed: Начальное слово(если указано, иначе выбирается случайно)
+    :type seed: str
     :return: Фраза, построенная по указанной модели
     :rtype: str
-
-    '''
-    phrase = ''
-    if namespace.seed is None:
+    """
+    phrase = []
+    # Выбираем первое слово из модели
+    if seed is None:
         token_0 = random.choice(list(model.keys()))
-    elif namespace.seed not in model:
+    elif seed not in model or seed == ENDSYMBOL:
         raise KeyError("Указанного слова нет в модели")
     else:
-        token_0 = namespace.seed
+        token_0 = seed
+    # Выбираем второе слово с учетом частоты вхождения
     token_1 = weighted_choice(model[token_0])
-    while len(phrase.split()) < number:
-        if not token_0.isalpha():  # Необходимо, чтобы отсечь символ '#'
+    # Записываем выбранные слова в список
+    while len(phrase) < number:
+        if token_0 == ENDSYMBOL:  # Необходимо, чтобы отсечь символ '#'
             token_0, token_1 = token_1, weighted_choice(model[token_1])
-        if phrase == '':
-            phrase += token_0
-        else:
-            phrase += ' ' + token_0
+        phrase.append(token_0)
         token_0, token_1 = token_1, weighted_choice(model[token_1])
-    return phrase
+    return ' '.join(phrase)
 
 
-def write_phrase(phrase):
-    '''
-
-    :param phrase: Фраза, которую нужно записать
-    :return: Записывает фразу в указанный файл
-             (или выводит в sys.stdin, если не указан аргумент --output)
-
-    '''
-    if namespace.output is None:
+def write_phrase(phrase, output):
+    """
+    Запись построенной последовательности в указанный файл
+    (если не указан, то консольный вывод)
+    :param phrase: Последовательность слов
+    :type phrase: str
+    :param output: Путь к файлу, в который производится запись
+    :type output: str
+    """
+    if output is None:
         print(phrase)  # Консольный вывод текста
     else:
-        with open(namespace.output, 'w') as data:
+        with open(output, 'w') as data:
             data.write(phrase)  # Запись в указанный файл
 
 
 if __name__ == "__main__":
-    write_phrase(build_phrase(load_model(), int(namespace.length)))
+    model = load_model(namespace.model)
+    phrase = build_phrase(model, int(namespace.length), namespace.seed)
+    write_phrase(phrase, namespace.output)
