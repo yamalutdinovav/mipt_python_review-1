@@ -12,7 +12,6 @@ import argparse
 ENDSYMBOL = '#'
 
 
-
 def load_model(model):
     """
     Загрузка модели из файла
@@ -102,10 +101,12 @@ if __name__ == "__main__":
                        required=True)
     parse.add_argument('--seed', help='Необязательный аргумент.'
                                       ' Начальное слово текста. '
-                                      'Если не указано, выбираем слово случайно',
+                                      'Если не указано, '
+                                      'выбираем слово случайно',
                        action='store', dest='seed')
     parse.add_argument('--length', help='Обязательный аргумент. '
-                                        'Длина генерируемой последовательности слов',
+                                        'Длина генерируемой '
+                                        'последовательности слов',
                        required=True, action='store', dest='length')
     parse.add_argument('--output',
                        help='Файл, в который будет записан результат. '
