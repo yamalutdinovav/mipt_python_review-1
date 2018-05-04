@@ -11,24 +11,6 @@ import argparse
 # Специальный служебный символ для начала и конца строки
 ENDSYMBOL = '#'
 
-# Аргументы командной строки:
-parse = argparse.ArgumentParser(
-    description='Запись сгенерированного на основе словаря биграмм текста')
-parse.add_argument('--model',
-                   help='Обязательный аргумент. '
-                   'Путь к файлу, из которого загружается модель.',
-                   required=True)
-parse.add_argument('--seed', help='Необязательный аргумент.'
-                                  ' Начальное слово текста. '
-                   'Если не указано, выбираем слово случайно',
-                   action='store', dest='seed')
-parse.add_argument('--length', help='Обязательный аргумент. '
-                   'Длина генерируемой последовательности слов',
-                   required=True, action='store', dest='length')
-parse.add_argument('--output',
-                   help='Файл, в который будет записан результат. '
-                   'Если не указан, текст выводится в stdout')
-namespace = parse.parse_args()
 
 
 def load_model(model):
@@ -111,6 +93,24 @@ def write_phrase(phrase, output):
 
 
 if __name__ == "__main__":
+    # Аргументы командной строки:
+    parse = argparse.ArgumentParser(
+        description='Запись сгенерированного на основе словаря биграмм текста')
+    parse.add_argument('--model',
+                       help='Обязательный аргумент. '
+                            'Путь к файлу, из которого загружается модель.',
+                       required=True)
+    parse.add_argument('--seed', help='Необязательный аргумент.'
+                                      ' Начальное слово текста. '
+                                      'Если не указано, выбираем слово случайно',
+                       action='store', dest='seed')
+    parse.add_argument('--length', help='Обязательный аргумент. '
+                                        'Длина генерируемой последовательности слов',
+                       required=True, action='store', dest='length')
+    parse.add_argument('--output',
+                       help='Файл, в который будет записан результат. '
+                            'Если не указан, текст выводится в stdout')
+    namespace = parse.parse_args()
     model = load_model(namespace.model)
     phrase = build_phrase(model, int(namespace.length), namespace.seed)
     write_phrase(phrase, namespace.output)
