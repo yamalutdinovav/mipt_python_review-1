@@ -46,10 +46,15 @@ def train(directory, lc):
              сопоставляется следующее за ним и частота вхождения пары
     :rtype: dict
     """
-    tokens = list(gen_tokens(directory, lc))
+    # Генератор, отвечающий ща первое слово в паре
+    first_token = gen_tokens(directory, lc)
+    second_token = gen_tokens(directory, lc)
+    # Генератор second_token отвечает за второе слово,
+    # поэтому сдвигаем его
+    next(second_token)
     # Строим модель, сопоставляя каждому слову его последователей
     # и частоты их вхождения
-    pairs = Counter(zip(tokens[:-1], tokens[1:]))
+    pairs = Counter(zip(first_token, second_token))
     model = {token: {next_token: frequency
                      for (token_1, next_token), frequency in pairs.items()
                      if token_1 == token}
