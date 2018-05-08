@@ -18,21 +18,19 @@ ENDSYMBOL = '#'
 alphabet = re.compile(u'[a-zA-Zа-яА-яё]+')
 
 
-def gen_tokens(directory, lc):
+def gen_tokens(line, lc):
     """
     Создает генератор токенов (слов, очищенных от неалфавитных символов)
     на основе текстов с помощью регулярного выражения
-    :param directory: Путь к директории, в которой лежат тексты
-    :type directory: str
+    :param line: Строка текста
+    :type line: str
     :param lc: если True, то приводим тексты к lowercase
     :type lc: bool
     :return: Генератор слов, очищенных от неалфавитных символов
     """
-    for file in get_files(directory):
-        for line in file:
-            for token in alphabet.findall(line):
-                yield token.lower() if lc else token
-            yield ENDSYMBOL  # Отмечаем конец строки
+    for token in alphabet.findall(line):
+        yield token.lower() if lc else token
+    yield ENDSYMBOL  # Отмечаем конец строки
 
 
 def train(directory, lc):
@@ -46,15 +44,13 @@ def train(directory, lc):
              сопоставляется следующее за ним и частота вхождения пары
     :rtype: dict
     """
-    # Генератор, отвечающий ща первое слово в паре
-    first_token = gen_tokens(directory, lc)
-    second_token = gen_tokens(directory, lc)
-    # Генератор second_token отвечает за второе слово,
-    # поэтому сдвигаем его
-    next(second_token)
-    # Строим модель, сопоставляя каждому слову его последователей
-    # и частоты их вхождения
-    pairs = Counter(zip(first_token, second_token))
+    # Посчитаем число вхождений всех пар слов в текстах
+    pairs = Counter()
+    for file in get_files(directory):
+        for line in file:
+            tokens = list(gen_tokens(line, lc))
+            pairs += Counter(zip(tokens[:-1], tokens[1:]))
+    # На основе pairs строим модель в виде словаря словарей
     model = {token: {next_token: frequency
                      for (token_1, next_token), frequency in pairs.items()
                      if token_1 == token}
